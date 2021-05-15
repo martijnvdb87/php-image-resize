@@ -1,0 +1,17 @@
+{
+    "name": "martijnvdb/php-image-resize",
+    "description": "An image resizer library for PHP",
+    "version": "0.1.0",
+    "type": "library",
+    "keywords": [
+        "image resize"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Martijn van den Bosch",
+            "email": "martijn_van_den_bosch@hotmail.com"
+        }
+    ],
+    "require": {}
+}
