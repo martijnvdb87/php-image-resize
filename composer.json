@@ -13,5 +13,10 @@
             "email": "martijn_van_den_bosch@hotmail.com"
         }
     ],
-    "require": {}
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Martijnvdb\\ImageResize\\": "src/"
+        }
+    }
 }
