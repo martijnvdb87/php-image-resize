@@ -392,6 +392,22 @@ class ImageResize
     }
 
     /**
+     * Create all missing dirs.
+     * 
+     * @return self
+     */
+    public function createMissingDirs(): self
+    {
+        $dirname = dirname($this->getTargetPath());
+
+        if(!file_exists($dirname)) {
+            mkdir($dirname, 0755, true);
+        }
+
+        return $this;
+    }
+
+    /**
      * Export the image using the given settings.
      * 
      * @return self
@@ -399,6 +415,7 @@ class ImageResize
     public function export(string $path): self
     {
         $this->setTargetPath($path);
+        $this->createMissingDirs();
 
         if ($this->getSourceMimeType() === 'image/jpeg') {
             imagejpeg($this->createTargetImage(), $this->getTargetPath(), $this->getTargetQuality());

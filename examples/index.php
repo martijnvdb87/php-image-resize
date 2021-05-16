@@ -7,4 +7,4 @@ use Martijnvdb\ImageResize\ImageResize;
 $image = ImageResize::get(__DIR__ . '/image-1.jpg')
     ->setWidth(500)
     ->setHeight(500)
-    ->export(__DIR__ . '/target-image-1.jpg');
+    ->export(__DIR__ . '/resized/image-1.jpg');
