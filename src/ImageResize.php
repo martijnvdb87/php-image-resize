@@ -89,6 +89,12 @@ class ImageResize
     private $target_fixed_ratio = true;
 
     /**
+     * The cached images.
+     * @var array
+     */
+    private static $cached_images = [];
+
+    /**
      * Create a new instance of the ImageResize class.
      * 
      * @param  string $path
@@ -140,6 +146,10 @@ class ImageResize
      */
     private function createSourceImage()
     {
+        if(self::getCachedImage($this->source_path)) {
+            return self::getCachedImage($this->source_path);
+        }
+
         if ($this->getSourceMimeType() === 'image/jpeg') {
             $this->source_image = imagecreatefromjpeg($this->source_path);
         } else if ($this->getSourceMimeType() === 'image/png') {
@@ -147,6 +157,8 @@ class ImageResize
         } else if ($this->getSourceMimeType() === 'image/gif') {
             $this->source_image = imagecreatefromgif($this->source_path);
         }
+
+        self::addImageToCache($this->source_path, $this->source_image);
 
         return $this->source_image;
     }
@@ -159,6 +171,7 @@ class ImageResize
     public static function get(string $path): self
     {
         $instance = new self($path);
+        $instance->createSourceImage();
         return $instance;
     }
 
@@ -392,6 +405,43 @@ class ImageResize
     }
 
     /**
+     * Add an image to the ImageResize cache.
+     * 
+     * @param string $path
+     * @param $image
+     */
+    public static function addImageToCache(string $path, $image): void
+    {
+        self::$cached_images[$path] = $image;
+    }
+
+    /**
+     * Remove image from ImageResize cache.
+     * 
+     * @param string $path
+     */
+    public static function removeCachedImage(string $path): void
+    {
+        self::$cached_images = array_filter(self::$cached_images, function($value, $key) use ($path) {
+            return $key !== $path;
+        }, ARRAY_FILTER_USE_BOTH);
+    }
+
+    /**
+     * Get an image from the ImageResize cache.
+     * 
+     * @param string $path
+     */
+    public static function getCachedImage(string $path)
+    {
+        if(isset(self::$cached_images[$path])) {
+            return self::$cached_images[$path];
+        }
+
+        return null;
+    }
+
+    /**
      * Create all missing dirs.
      * 
      * @return self
@@ -424,6 +474,8 @@ class ImageResize
         } else if ($this->getSourceMimeType() === 'image/gif') {
             imagegif($this->createTargetImage(), $this->getTargetPath());
         }
+
+        self::removeCachedImage($this->getTargetPath());
 
         return $this;
     }
