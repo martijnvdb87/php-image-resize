@@ -89,6 +89,12 @@ class ImageResize
     private $target_fixed_ratio = true;
 
     /**
+     * The MIME content type of the target image.
+     * @var string
+     */
+    private $target_mimetype = null;
+
+    /**
      * The cached images.
      * @var array
      */
@@ -150,12 +156,14 @@ class ImageResize
             return self::getCachedImage($this->source_path);
         }
 
-        if ($this->getSourceMimeType() === 'image/jpeg') {
+        if (in_array($this->getSourceMimeType(), ['image/jpg', 'image/jpeg'])) {
             $this->source_image = imagecreatefromjpeg($this->source_path);
         } else if ($this->getSourceMimeType() === 'image/png') {
             $this->source_image = imagecreatefrompng($this->source_path);
         } else if ($this->getSourceMimeType() === 'image/gif') {
             $this->source_image = imagecreatefromgif($this->source_path);
+        } else if($this->getSourceMimeType() === 'image/webp') {
+            $this->source_image = imagecreatefromwebp($this->source_path);
         }
 
         self::addImageToCache($this->source_path, $this->source_image);
@@ -393,6 +401,54 @@ class ImageResize
     }
 
     /**
+     * Set the MIME type of the target image.
+     * 
+     * @param string $path
+     * @return self
+     */
+    public function setType(string $type): self
+    {
+        switch($type) {
+            case 'image/jpg':
+            case 'image/jpeg':
+            case 'image/gif':
+            case 'image/png':
+            case 'image/webp':
+                break;
+
+            case 'jpg':
+            case 'jpeg':
+            case 'gif':
+            case 'png':
+            case 'webp':
+                $type = "image/$type";
+                break;
+
+            default:
+                $type = $this->getSourceMimeType();
+        }
+
+        $this->target_mimetype = $type;
+
+        return $this;
+    }
+
+    /**
+     * Get the MIME type of the target image.
+     * 
+     * @return string
+     */
+    private function getTargetType(): string
+    {
+        if(!isset($this->target_mimetype)) {
+            $pathinfo = pathinfo($this->getTargetPath());
+            $this->setType($pathinfo['extension']);
+        }
+
+        return $this->target_mimetype;
+    }
+
+    /**
      * Create the target image.
      * 
      */
@@ -467,12 +523,14 @@ class ImageResize
         $this->setTargetPath($path);
         $this->createMissingDirs();
 
-        if ($this->getSourceMimeType() === 'image/jpeg') {
+        if (in_array($this->getTargetType(), ['image/jpg', 'image/jpeg'])) {
             imagejpeg($this->createTargetImage(), $this->getTargetPath(), $this->getTargetQuality());
-        } else if ($this->getSourceMimeType() === 'image/png') {
+        } else if ($this->getTargetType() === 'image/png') {
             imagepng($this->createTargetImage(), $this->getTargetPath());
-        } else if ($this->getSourceMimeType() === 'image/gif') {
+        } else if ($this->getTargetType() === 'image/gif') {
             imagegif($this->createTargetImage(), $this->getTargetPath());
+        } else if($this->getTargetType() === 'image/webp') {
+            imagewebp($this->createTargetImage(), $this->getTargetPath(), $this->getTargetQuality());
         }
 
         self::removeCachedImage($this->getTargetPath());
