@@ -19,15 +19,9 @@ class ImageResize
 {
     /**
      * The path to the source image.
-     * @var string
+     * @var string|null
      */
     private $source_path;
-
-    /**
-     * The extension to the source image.
-     * @var string
-     */
-    private $source_extension;
 
     /**
      * The MIME content type to the source image.
@@ -78,9 +72,9 @@ class ImageResize
 
     /**
      * The quality of the target image.
-     * @var int
+     * @var float
      */
-    private $target_quality = 80;
+    private $target_quality = 0.9;
 
     /**
      * If the ratio of the target image should be fixed.
@@ -107,29 +101,12 @@ class ImageResize
      */
     public function __construct(string $path)
     {
+        if(!file_exists($path)) {
+            return;
+        }
+
         $this->source_path = $path;
-    }
-
-    /**
-     * Get the pathinfo of the source image.
-     * 
-     * @return array
-     */
-    private function getSourceInfo(): array
-    {
-        list(
-            $this->source_dirname,
-            $this->source_basename,
-            $this->source_extension,
-            $this->source_filename
-        ) = pathinfo($this->source_path);
-
-        return [
-            $this->source_dirname,
-            $this->source_basename,
-            $this->source_extension,
-            $this->source_filename
-        ];
+        $this->createSourceImage();
     }
 
     /**
@@ -137,7 +114,7 @@ class ImageResize
      * 
      * @return string
      */
-    public function getSourceMimeType(): string
+    private function getSourceMimeType(): string
     {
         if (!isset($this->source_mimetype)) {
             $this->source_mimetype = mime_content_type($this->source_path);
@@ -178,9 +155,7 @@ class ImageResize
      */
     public static function get(string $path): self
     {
-        $instance = new self($path);
-        $instance->createSourceImage();
-        return $instance;
+        return new self($path);
     }
 
     /**
@@ -188,7 +163,7 @@ class ImageResize
      * 
      * @return self
      */
-    public function getSourcePath(): string
+    private function getSourcePath(): ?string
     {
         return $this->source_path;
     }
@@ -212,7 +187,7 @@ class ImageResize
      * 
      * @return self
      */
-    public function getSourceWidth(): int
+    private function getSourceWidth(): int
     {
         list($width, $height) = $this->getSourceDimensions();
         return $width;
@@ -223,7 +198,7 @@ class ImageResize
      * 
      * @return self
      */
-    public function getSourceHeight(): int
+    private function getSourceHeight(): int
     {
         list($width, $height) = $this->getSourceDimensions();
         return $height;
@@ -234,7 +209,7 @@ class ImageResize
      * 
      * @return float
      */
-    public function getSourceRatio(): float
+    private function getSourceRatio(): float
     {
         if (!isset($this->source_ratio)) {
             $this->source_ratio = $this->getSourceWidth() / $this->getSourceHeight();
@@ -272,20 +247,9 @@ class ImageResize
      * 
      * @return self
      */
-    public function setQuality(int $quality): self
+    public function setQuality(float $quality): self
     {
         $this->target_quality = $quality;
-        return $this;
-    }
-
-    /**
-     * Use a fixed ratio for the target image.
-     * 
-     * @return self
-     */
-    public function fixedRatio(bool $fixed_ratio = true): self
-    {
-        $this->target_fixed_ratio = $fixed_ratio;
         return $this;
     }
 
@@ -305,7 +269,7 @@ class ImageResize
      * 
      * @return int
      */
-    public function getTargetDimensions(): array
+    private function getTargetDimensions(): array
     {
         if(!isset($this->target_width) && !isset($this->target_height)) {
             $this->target_width = $this->getSourceWidth();
@@ -349,7 +313,7 @@ class ImageResize
      * 
      * @return int
      */
-    public function getTargetWidth(): int
+    private function getTargetWidth(): int
     {
         list($this->target_width, $this->target_height) = $this->getTargetDimensions();
 
@@ -361,7 +325,7 @@ class ImageResize
      * 
      * @return int
      */
-    public function getTargetHeight(): int
+    private function getTargetHeight(): int
     {
         list($this->target_width, $this->target_height) = $this->getTargetDimensions();
 
@@ -371,9 +335,9 @@ class ImageResize
     /**
      * Get the quality of the target image.
      * 
-     * @return int
+     * @return float
      */
-    public function getTargetQuality(): int
+    private function getTargetQuality(): float
     {
         return $this->target_quality;
     }
@@ -383,7 +347,7 @@ class ImageResize
      * 
      * @return string
      */
-    public function getTargetPath(): string
+    private function getTargetPath(): string
     {
         return $this->target_path;
     }
@@ -393,7 +357,7 @@ class ImageResize
      * 
      * @param string $path
      */
-    public function setTargetPath(string $path): self
+    private function setTargetPath(string $path): self
     {
         $this->target_path = $path;
 
@@ -425,7 +389,9 @@ class ImageResize
                 break;
 
             default:
-                $type = $this->getSourceMimeType();
+                if(empty($this->getSourcePath())) {
+                    $type = $this->getSourceMimeType();
+                }
         }
 
         $this->target_mimetype = $type;
@@ -452,7 +418,7 @@ class ImageResize
      * Create the target image.
      * 
      */
-    public function createTargetImage()
+    private function createTargetImage()
     {
         $this->target_image = imagecreatetruecolor($this->getTargetWidth(), $this->getTargetHeight());
         imagecopyresampled($this->target_image, $this->createSourceImage(), 0, 0, 0, 0, $this->getTargetWidth(), $this->getTargetHeight(), $this->getSourceWidth(), $this->getSourceHeight());
@@ -466,7 +432,7 @@ class ImageResize
      * @param string $path
      * @param $image
      */
-    public static function addImageToCache(string $path, $image): void
+    private static function addImageToCache(string $path, $image): void
     {
         self::$cached_images[$path] = $image;
     }
@@ -476,7 +442,7 @@ class ImageResize
      * 
      * @param string $path
      */
-    public static function removeCachedImage(string $path): void
+    private static function removeCachedImage(string $path): void
     {
         self::$cached_images = array_filter(self::$cached_images, function($value, $key) use ($path) {
             return $key !== $path;
@@ -488,7 +454,7 @@ class ImageResize
      * 
      * @param string $path
      */
-    public static function getCachedImage(string $path)
+    private static function getCachedImage(string $path)
     {
         if(isset(self::$cached_images[$path])) {
             return self::$cached_images[$path];
@@ -502,7 +468,7 @@ class ImageResize
      * 
      * @return self
      */
-    public function createMissingDirs(): self
+    private function createMissingDirs(): self
     {
         $dirname = dirname($this->getTargetPath());
 
@@ -518,19 +484,23 @@ class ImageResize
      * 
      * @return self
      */
-    public function export(string $path): self
+    public function export(string $path): ?self
     {
+        if(empty($this->getSourcePath())) {
+            throw new \Exception("Source file not found.");
+        }
+
         $this->setTargetPath($path);
         $this->createMissingDirs();
 
         if (in_array($this->getTargetType(), ['image/jpg', 'image/jpeg'])) {
-            imagejpeg($this->createTargetImage(), $this->getTargetPath(), $this->getTargetQuality());
+            imagejpeg($this->createTargetImage(), $this->getTargetPath(), ($this->getTargetQuality() * 100));
         } else if ($this->getTargetType() === 'image/png') {
-            imagepng($this->createTargetImage(), $this->getTargetPath());
+            imagepng($this->createTargetImage(), $this->getTargetPath(), ($this->getTargetQuality() * 10));
         } else if ($this->getTargetType() === 'image/gif') {
             imagegif($this->createTargetImage(), $this->getTargetPath());
         } else if($this->getTargetType() === 'image/webp') {
-            imagewebp($this->createTargetImage(), $this->getTargetPath(), $this->getTargetQuality());
+            imagewebp($this->createTargetImage(), $this->getTargetPath(), ($this->getTargetQuality() * 100));
         }
 
         self::removeCachedImage($this->getTargetPath());
