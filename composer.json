@@ -1,18 +1,20 @@
 {
     "name": "martijnvdb/php-image-resize",
-    "description": "An image resizer library for PHP",
+    "description": "Simple library for resizing and converting images to different filetypes",
     "version": "0.1.0",
     "type": "library",
     "keywords": [
         "image resize"
     ],
+    "homepage": "https://github.com/martijnvdb87/php-image-resize",
+    "readme": "README.md",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Martijn van den Bosch",
-            "email": "martijn_van_den_bosch@hotmail.com"
-        }
-    ],
+    "authors": [{
+        "name": "Martijn van den Bosch",
+        "email": "martijn_van_den_bosch@hotmail.com",
+        "homepage": "https://martijnvandenbosch.com",
+        "role": "Developer"
+    }],
     "require": {},
     "autoload": {
         "psr-4": {
